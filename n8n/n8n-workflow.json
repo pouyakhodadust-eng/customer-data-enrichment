@@ -1,0 +1,397 @@
+{
+  "name": "Customer Data Enrichment Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 200],
+      "webhookId": "lead-webhook",
+      "method": "POST",
+      "path": "lead-created"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Validate and parse incoming lead data\nconst lead = items[0].json;\n\n// Required fields validation\nif (!lead.email) {\n  throw new Error('Email is required');\n}\n\n// Normalize data\nconst normalizedLead = {\n  email: lead.email.toLowerCase().trim(),\n  first_name: lead.first_name ? lead.first_name.trim() : null,\n  last_name: lead.last_name ? lead.last_name.trim() : null,\n  company_name: lead.company_name ? lead.company_name.trim() : null,\n  job_title: lead.job_title || null,\n  phone: lead.phone || null,\n  source: lead.source || 'website',\n  metadata: {\n    original_data: lead,\n    imported_at: new Date().toISOString(),\n    ip_address: $input.first().json.ip_address || null\n  }\n};\n\nreturn [{ json: normalizedLead }];"
+      },
+      "id": "data-normalizer",
+      "name": "Normalize Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [300, 200]
+    },
+    {
+      "parameters": {
+        "authentication": "database",
+        "operation": "insert",
+        "table": "leads",
+        "columns": "email,first_name,last_name,company_name,job_title,phone,source,metadata",
+        "returnAll": false,
+        "limit": 1
+      },
+      "id": "save-lead-db",
+      "name": "Save to Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [500, 200],
+      "credentials": {
+        "postgresApi": {
+          "id": "postgres-credentials",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://api:3000/api/v1/leads/{{ $json.id }}/enrich",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": false,
+        "specifyBody": "json",
+        "jsonBody": "={}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "trigger-enrichment",
+      "name": "Trigger Enrichment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [700, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.success }}",
+              "operation": "equal",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "id": "check-enrichment",
+      "name": "Enrichment Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://api:3000/api/v1/leads/{{ $json.lead_id }}/enrich",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": false,
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "retry-enrichment",
+      "name": "Retry Enrichment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1100, 100]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Calculate lead score\nconst lead = items[0].json;\n\n// Scoring algorithm\nlet score = 50; // Base score\n\n// Email validation bonus\nif (lead.email_validated) {\n  score += 10;\n}\n\n// Company data bonus\nif (lead.organization_data) {\n  if (lead.organization_data.company_size >= 100) {\n    score += 15;\n  }\n  if (lead.organization_data.industry) {\n    score += 10;\n  }\n}\n\n// Engagement data bonus\nif (lead.engagement_score) {\n  score += Math.min(lead.engagement_score, 25);\n}\n\n// Cap score at 100\nscore = Math.min(100, score);\n\nreturn [{\n  json: {\n    lead_id: lead.id,\n    total_score: score,\n    score_category: score >= 80 ? 'hot' : score >= 50 ? 'warm' : 'cold',\n    calculated_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "calculate-score",
+      "name": "Calculate Score",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "database",
+        "operation": "insert",
+        "table": "lead_scores",
+        "columns": "lead_id,total_score,calculated_at",
+        "returnAll": false,
+        "limit": 1
+      },
+      "id": "save-score-db",
+      "name": "Save Score",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1100, 300],
+      "credentials": {
+        "postgresApi": {
+          "id": "postgres-credentials",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.total_score }}",
+              "operation": "gte",
+              "value2": 80
+            }
+          ]
+        }
+      },
+      "id": "check-hot-lead",
+      "name": "Hot Lead?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1300, 300]
+    },
+    {
+      "parameters": {
+        "to": "sales@example.com",
+        "subject": "=🔥 New Hot Lead: {{ $json.email }}",
+        "options": {},
+        "attachments": {}
+      },
+      "id": "notify-sales",
+      "name": "Notify Sales",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [1500, 200],
+      "credentials": {
+        "gmailApi": {
+          "id": "gmail-credentials",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "channel": "sales-leads",
+        "text": "=🎯 New hot lead detected:\\n\\n**{{ $json.email }}**\\nScore: {{ $json.total_score }}\\nCompany: {{ $json.company_name }}"
+      },
+      "id": "slack-notification",
+      "name": "Slack Notification",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1500, 400],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-credentials",
+          "name": "Slack"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Update lead status to qualified\nreturn items.map(item => ({\n  json: {\n    ...item.json,\n    status: 'qualified',\n    updated_at: new Date().toISOString()\n  }\n}));"
+      },
+      "id": "update-status",
+      "name": "Update Status",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1700, 200]
+    },
+    {
+      "parameters": {
+        "authentication": "database",
+        "operation": "update",
+        "table": "leads",
+        "updateKey": "id",
+        "columns": "status,updated_at",
+        "returnAll": false,
+        "limit": 1
+      },
+      "id": "save-status-db",
+      "name": "Save Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1900, 200],
+      "credentials": {
+        "postgresApi": {
+          "id": "postgres-credentials",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.zapier.com/hooks/catch/123456/abcdef",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"lead_id\": \"{{ $json.id }}\", \"email\": \"{{ $json.email }}\", \"score\": {{ $json.total_score }} }"
+      },
+      "id": "webhook-out",
+      "name": "Webhook Out",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [2100, 200]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Data": {
+      "main": [
+        [
+          {
+            "node": "Save to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Database": {
+      "main": [
+        [
+          {
+            "node": "Trigger Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Enrichment Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrichment Success?": {
+      "main": [
+        [
+          {
+            "node": "Calculate Score",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retry Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Enrichment Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Score": {
+      "main": [
+        [
+          {
+            "node": "Save Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Score": {
+      "main": [
+        [
+          {
+            "node": "Hot Lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hot Lead?": {
+      "main": [
+        [
+          {
+            "node": "Notify Sales",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Notify Sales": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status": {
+      "main": [
+        [
+          {
+            "node": "Save Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Status": {
+      "main": [
+        [
+          {
+            "node": "Webhook Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": true,
+  "staticData": null
+}

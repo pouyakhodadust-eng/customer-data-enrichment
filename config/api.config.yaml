@@ -1,0 +1,154 @@
+# API Configuration
+app:
+  name: "Customer Data Enrichment API"
+  host: "0.0.0.0"
+  port: 3000
+  environment: ${NODE_ENV:-production}
+  debug: false
+
+# Database Configuration
+database:
+  type: "postgresql"
+  host: "postgres"
+  port: 5432
+  username: ${POSTGRES_USER:-enrichment_user}
+  password: ${POSTGRES_PASSWORD:-secure_password}
+  name: ${POSTGRES_DB:-enrichment_db}
+  pool:
+    min: 2
+    max: 10
+  migrations: true
+
+# Redis Configuration
+redis:
+  host: "redis"
+  port: 6379
+  password: null
+  db: 0
+  key_prefix: "enrichment:"
+  cache:
+    ttl: 3600
+    max_size: 10000
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+  expires_in: ${JWT_EXPIRES_IN:-24h}
+  refresh_expires_in: "7d"
+
+# API Keys for Enrichment Services
+enrichment:
+  providers:
+    clearbit:
+      enabled: true
+      api_key: ${CLEARBIT_KEY}
+      rate_limit: 100
+      timeout: 5000
+    hunter:
+      enabled: true
+      api_key: ${HUNTER_KEY}
+      rate_limit: 50
+      timeout: 5000
+    fullcontact:
+      enabled: true
+      api_key: ${FULLCONTACT_KEY}
+      rate_limit: 30
+      timeout: 5000
+    zerobounce:
+      enabled: false
+      api_key: ${ZEROBOUNCE_KEY}
+      rate_limit: 100
+      timeout: 5000
+
+# Scoring Configuration
+scoring:
+  model_version: "1.0.0"
+  weights:
+    engagement: 0.35
+    demographic: 0.25
+    firmographic: 0.25
+    behavioral: 0.15
+  thresholds:
+    hot: 80
+    warm: 50
+    cold: 0
+
+# Rate Limiting
+rate_limit:
+  window_ms: 60000
+  max_requests: 100
+  skip_failed_requests: false
+
+# CORS Configuration
+cors:
+  enabled: true
+  origins:
+    - "http://localhost:8080"
+    - "http://localhost:3000"
+  methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+  credentials: true
+  max_age: 86400
+
+# Logging Configuration
+logging:
+  level: ${LOG_LEVEL:-info}
+  format: "json"
+  include_timestamp: true
+  include_request_id: true
+
+# Monitoring
+monitoring:
+  enabled: true
+  metrics_endpoint: "/metrics"
+  health_endpoint: "/health"
+  prometheus_enabled: true
+
+# Webhook Configuration
+webhooks:
+  max_payload_size: "5mb"
+  signature_header: "X-Webhook-Signature"
+  timestamp_header: "X-Webhook-Timestamp"
+  timestamp_tolerance_ms: 300000
+
+# Security
+security:
+  encryption_algorithm: "aes-256-gcm"
+  password_min_length: 8
+  max_login_attempts: 5
+  lockout_duration_minutes: 30
+
+# Session Configuration
+session:
+  cookie_name: "enrichment_session"
+  cookie_secure: true
+  cookie_http_only: true
+  cookie_same_site: "strict"
+
+# Queue Configuration
+queue:
+  redis_url: "redis://redis:6379"
+  prefix: "enrichment"
+  jobs:
+    enrichment:
+      attempts: 3
+      backoff:
+        type: "exponential"
+        delay: 1000
+    scoring:
+      attempts: 3
+      backoff:
+        type: "exponential"
+        delay: 500
+
+# Feature Flags
+features:
+  ai_scoring: true
+  batch_enrichment: true
+  webhook_sync: true
+  export_enabled: true
+  dark_mode: true
