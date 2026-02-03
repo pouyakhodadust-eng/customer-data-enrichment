@@ -87,4 +87,4 @@ jobs:
           load: true
 
       - name: Build complete
-        run: echo "All Docker images built successfully"
+        run: echo "✅ All Docker images built successfully"
