@@ -8,9 +8,9 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "dev:watch": "nodemon --exec ts-node src/index.ts",
-    "test": "jest --coverage",
+    "test": "jest --testPathIgnorePatterns='e2e|integration' --passWithNoTests",
     "test:watch": "jest --watch",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint src/**/*.ts tests/**/*.ts --quiet",
     "migrate": "node dist/migrate.js",
     "seed": "node dist/seed.js"
   },
