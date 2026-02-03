@@ -18,7 +18,10 @@ import { webhookRouter } from './routes/webhook';
 import { authRouter } from './routes/auth';
 
 const config = loadConfig();
-const logger = createLogger(config.logging);
+const logger = createLogger({
+  ...config.logging,
+  format: config.logging.format as 'json' | 'simple'
+});
 
 async function bootstrap(): Promise<Application> {
   const app = express();
@@ -86,7 +89,7 @@ app.use((req: Request & { id?: string }, res: Response, next: NextFunction) => {
   });
 
   // 404 handler
-  app.use((req: Request, res: Response) => {
+  app.use((req: Request & { id?: string }, res: Response) => {
     res.status(404).json({
       error: 'Not Found',
       message: `Route ${req.method} ${req.path} not found`,

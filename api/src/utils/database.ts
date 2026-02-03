@@ -1,4 +1,4 @@
-import { Pool, PoolClient, QueryResult } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 import fs from 'fs';
 import path from 'path';
 import { loadConfig } from './config';
@@ -46,7 +46,7 @@ export function getPool(): Pool {
   return pool;
 }
 
-export async function query<T = Record<string, unknown>>(text: string, params?: any[]): Promise<QueryResult<T>> {
+export async function query<T extends QueryResultRow = QueryResultRow>(text: string, params?: any[]): Promise<QueryResult<T>> {
   const pool = getPool();
   return pool.query<T>(text, params);
 }

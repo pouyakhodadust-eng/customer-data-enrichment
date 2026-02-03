@@ -72,6 +72,7 @@ export interface Config {
   logging: {
     level: string;
     format: string;
+    outputs: string[];
     include_timestamp: boolean;
     include_request_id: boolean;
   };
