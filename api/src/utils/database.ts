@@ -1,7 +1,7 @@
 import { Pool, PoolClient, QueryResult } from 'pg';
 import fs from 'fs';
 import path from 'path';
-import { loadConfig } from './utils/config';
+import { loadConfig } from './config';
 
 let pool: Pool | null = null;
 
@@ -46,9 +46,9 @@ export function getPool(): Pool {
   return pool;
 }
 
-export async function query<T = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
+export async function query<T = Record<string, unknown>>(text: string, params?: any[]): Promise<QueryResult<T>> {
   const pool = getPool();
-  return pool.query(text, params);
+  return pool.query<T>(text, params);
 }
 
 export async function transaction<T>(

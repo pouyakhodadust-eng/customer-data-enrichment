@@ -280,7 +280,7 @@ class ScoringService {
     score = 30; // Base engagement from lead creation
 
     breakdown.engagement_level = 30;
-    breakdown.engagement_base = true;
+    breakdown.engagement_base = 30;
 
     return Math.min(100, Math.max(0, score));
   }

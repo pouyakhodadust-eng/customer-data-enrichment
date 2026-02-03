@@ -86,7 +86,7 @@ class EnrichmentService {
         const result = await this.callProvider(name, lead);
         results.push(result);
 
-        if (result.success && (!bestResult || result.credits_used < (bestResult.credits_used || Infinity))) {
+        if (result.success && (!bestResult || (result.credits_used || 0) < ((bestResult?.credits_used) || Infinity))) {
           bestResult = result.data;
         }
       }

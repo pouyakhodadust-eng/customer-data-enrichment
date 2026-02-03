@@ -51,7 +51,7 @@ async function bootstrap(): Promise<Application> {
   app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
   // Request ID
-  app.use((req: Request, res: Response, next: NextFunction) => {
+app.use((req: Request & { id?: string }, res: Response, next: NextFunction) => {
     req.id = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     res.setHeader('X-Request-ID', req.id);
     next();
