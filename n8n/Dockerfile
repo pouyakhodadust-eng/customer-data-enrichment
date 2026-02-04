@@ -1,5 +1,5 @@
 # n8n Custom Dockerfile
-FROM n8nio/n8n:alpine AS base
+FROM n8nio/n8n:latest AS base
 
 # Install additional dependencies
 USER root
