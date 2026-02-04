@@ -80,7 +80,7 @@ jobs:
       - name: Build n8n image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./n8n
           dockerfile: Dockerfile.n8n
           push: false
           tags: enrichment-n8n:test
