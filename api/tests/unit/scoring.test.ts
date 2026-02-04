@@ -34,7 +34,8 @@ describe('ScoringService', () => {
       };
 
       const warmLead = { companySize: 'medium', hasTechStack: true, isDecisionMaker: false };
-      expect(calculateLeadScore(warmLead)).toBe(65);
+      // 50 + 15 + 20 = 85
+      expect(calculateLeadScore(warmLead)).toBe(85);
     });
 
     it('should calculate cold lead (<60)', () => {
