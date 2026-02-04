@@ -1,25 +1,14 @@
 # n8n Custom Dockerfile
 FROM n8nio/n8n:latest AS base
 
-# Install additional dependencies
+# Switch to root for setup
 USER root
 
-# Install Python and build tools for native modules
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    make \
-    g++ \
-    libc-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip3 install --no-cache-dir \
-    pandas \
-    numpy
-
 # Install specific n8n-community nodes
-RUN n8n generate-robots-txt && \
+RUN npx n8n@latest generate-robots-txt && \
     npm install -g n8n-nodes-chatwork \
     n8n-nodes-slack \
-    n8n-nodesDISCORD
+    n8n-nodes-discord
 
 # Switch back to n8n user
 USER node
