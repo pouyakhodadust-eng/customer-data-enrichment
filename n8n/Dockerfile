@@ -1,18 +1,6 @@
 # n8n Custom Dockerfile
 FROM n8nio/n8n:latest AS base
 
-# Switch to root for setup
-USER root
-
-# Install specific n8n-community nodes
-RUN npx n8n@latest generate-robots-txt && \
-    npm install -g n8n-nodes-chatwork \
-    n8n-nodes-slack \
-    n8n-nodes-discord
-
-# Switch back to n8n user
-USER node
-
 # Copy custom settings and workflows
 COPY --chown=node:node environment-variables.sh /home/node/.n8n/environment-variables.sh
 COPY --chown=node:node n8n-workflow.json /home/node/.n8n/
