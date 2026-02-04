@@ -1,28 +1,14 @@
-# Frontend Dockerfile
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy source code
-COPY . .
-
-# Build for production
-RUN npm run build
-
-# Production stage
+# Frontend Dockerfile - Static HTML serving
 FROM nginx:alpine AS production
 
 # Copy nginx configuration
 COPY config/nginx.conf /etc/nginx/nginx.conf
 
 # Copy built assets
-COPY --from=builder --chown=nginx:nginx /app/dist /usr/share/nginx/html
+COPY index.html styles.css dashboard.js leads.js config.js /usr/share/nginx/html/
+
+# Copy any additional assets
+COPY assets/ /usr/share/nginx/html/assets/ 2>/dev/null || true
 
 # Expose port
 EXPOSE 80
