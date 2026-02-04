@@ -43,7 +43,7 @@ enrichment:
       timeout: 5000
     hunter:
       enabled: true
-      api_key: ec13be4674ef161f61e6a4190088ae8f3dfd299e
+      api_key: YOUR-HUNTER-API-KEY-HERE
       rate_limit: 50
       timeout: 5000
     fullcontact:
