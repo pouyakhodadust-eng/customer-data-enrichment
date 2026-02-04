@@ -30,34 +30,37 @@ class EnrichmentService {
   private initializeProviders(): void {
     const config = loadConfig();
     
-    // Clearbit
-    if (config.enrichment.providers.clearbit?.enabled) {
+    // Clearbit - check environment variable first
+    const clearbitKey = process.env.CLEARBIT_KEY || config.enrichment.providers.clearbit?.api_key;
+    if (config.enrichment.providers.clearbit?.enabled && clearbitKey) {
       this.providers.set('clearbit', {
         name: 'clearbit',
         enabled: true,
-        api_key: config.enrichment.providers.clearbit.api_key,
+        api_key: clearbitKey,
         rate_limit: config.enrichment.providers.clearbit.rate_limit,
         timeout: config.enrichment.providers.clearbit.timeout,
       });
     }
 
-    // Hunter
-    if (config.enrichment.providers.hunter?.enabled) {
+    // Hunter - check environment variable first
+    const hunterKey = process.env.HUNTER_KEY || config.enrichment.providers.hunter?.api_key;
+    if (config.enrichment.providers.hunter?.enabled && hunterKey && hunterKey !== 'YOUR-HUNTER-API-KEY-HERE') {
       this.providers.set('hunter', {
         name: 'hunter',
         enabled: true,
-        api_key: config.enrichment.providers.hunter.api_key,
+        api_key: hunterKey,
         rate_limit: config.enrichment.providers.hunter.rate_limit,
         timeout: config.enrichment.providers.hunter.timeout,
       });
     }
 
-    // FullContact
-    if (config.enrichment.providers.fullcontact?.enabled) {
+    // FullContact - check environment variable first
+    const fullcontactKey = process.env.FULLCONTACT_KEY || config.enrichment.providers.fullcontact?.api_key;
+    if (config.enrichment.providers.fullcontact?.enabled && fullcontactKey) {
       this.providers.set('fullcontact', {
         name: 'fullcontact',
         enabled: true,
-        api_key: config.enrichment.providers.fullcontact.api_key,
+        api_key: fullcontactKey,
         rate_limit: config.enrichment.providers.fullcontact.rate_limit,
         timeout: config.enrichment.providers.fullcontact.timeout,
       });
