@@ -23,8 +23,10 @@ RUN n8n generate-robots-txt && \
 # Switch back to n8n user
 USER node
 
-# Copy custom settings
-COPY --chown=node:node n8n/environment-variables.sh /home/node/.n8n/environment-variables.sh
+# Copy custom settings and workflows
+COPY --chown=node:node environment-variables.sh /home/node/.n8n/environment-variables.sh
+COPY --chown=node:node n8n-workflow.json /home/node/.n8n/
+COPY --chown=node:node n8n-credentials.json /home/node/.n8n/
 
 # Set working directory
 WORKDIR /home/node/.n8n
