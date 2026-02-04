@@ -81,7 +81,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./n8n
-          dockerfile: Dockerfile.n8n
           push: false
           tags: enrichment-n8n:test
           load: true
