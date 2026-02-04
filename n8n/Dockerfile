@@ -5,11 +5,12 @@ FROM n8nio/n8n:latest AS base
 USER root
 
 # Install Python and build tools for native modules
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
     libc-dev \
+    && rm -rf /var/lib/apt/lists/* \
     && pip3 install --no-cache-dir \
     pandas \
     numpy
