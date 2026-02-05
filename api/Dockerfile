@@ -12,6 +12,7 @@ RUN npm install
 
 # Copy source code
 COPY src/ ./src/
+COPY config/ ./config/
 
 # Build TypeScript
 RUN npm run build
@@ -32,6 +33,7 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/config ./config
 
 # Switch to non-root user
 USER nodejs
