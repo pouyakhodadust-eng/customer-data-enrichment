@@ -4,8 +4,8 @@ FROM nginx:alpine AS production
 # Copy nginx configuration
 COPY config/nginx.conf /etc/nginx/nginx.conf
 
-# Copy built assets
-COPY index.html styles.css dashboard.js leads.js config.js /usr/share/nginx/html/
+# Copy all frontend assets
+COPY index.html login.html styles.css dashboard.js leads.js enrichment.js settings.js app.js api.js config.js /usr/share/nginx/html/
 
 # Expose port
 EXPOSE 80
