@@ -6,6 +6,7 @@
 const App = {
     currentPage: 'dashboard',
     theme: 'light',
+    isAuthenticated: false,
     user: {
         name: 'John Doe',
         email: 'john@example.com',
@@ -14,16 +15,77 @@ const App = {
     },
 
     init() {
+        // Check authentication
+        this.checkAuth();
+        
+        // If not authenticated, show login overlay or redirect
+        if (!this.isAuthenticated) {
+            this.showAuthOverlay();
+            return;
+        }
+        
         this.loadTheme();
         this.loadUser();
         this.setupNavigation();
         this.setupModals();
         this.setupThemeToggle();
         this.setupMobileMenu();
+        this.setupLogout();
         this.loadCurrentPage();
         
         // Mark first load complete
         document.body.classList.add('loaded');
+    },
+
+    checkAuth() {
+        const stored = localStorage.getItem('user');
+        this.isAuthenticated = !!stored;
+        if (stored) {
+            this.user = JSON.parse(stored);
+        }
+    },
+
+    showAuthOverlay() {
+        // Remove any existing overlay
+        const existingOverlay = document.querySelector('.auth-overlay');
+        if (existingOverlay) {
+            existingOverlay.remove();
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'auth-overlay';
+        overlay.innerHTML = `
+            <div class="auth-message">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 16px; color: var(--primary);">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <h2>Authentication Required</h2>
+                <p>Please sign in to access the Customer Data Enrichment Engine.</p>
+                <a href="login.html" class="btn btn-primary">Sign In</a>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    },
+
+    logout() {
+        localStorage.removeItem('user');
+        localStorage.removeItem('remember');
+        window.location.href = 'login.html';
+    },
+
+    setupLogout() {
+        // Add logout functionality to user menu
+        const userInfo = document.querySelector('.user-info');
+        if (userInfo) {
+            userInfo.style.cursor = 'pointer';
+            userInfo.title = 'Click to logout';
+            userInfo.addEventListener('click', () => {
+                if (confirm('Are you sure you want to logout?')) {
+                    this.logout();
+                }
+            });
+        }
     },
 
     loadTheme() {
